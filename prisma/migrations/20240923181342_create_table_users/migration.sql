@@ -1,0 +1,17 @@
+-- AlterTable
+ALTER TABLE `products` MODIFY `updated_at` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+
+-- CreateTable
+CREATE TABLE `users` (
+    `email` VARCHAR(100) NOT NULL,
+    `username` VARCHAR(100) NULL,
+    `first_name` VARCHAR(100) NULL,
+    `last_name` VARCHAR(100) NULL,
+    `password` VARCHAR(100) NOT NULL,
+    `flag` ENUM('ACTIVED', 'PENDING', 'DISABLED', 'BANNED', 'DELETED') NOT NULL DEFAULT 'PENDING',
+    `created_at` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    UNIQUE INDEX `users_email_key`(`email`),
+    UNIQUE INDEX `users_username_key`(`username`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

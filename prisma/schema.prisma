@@ -6,9 +6,132 @@
 
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["fullTextIndex"]
 }
 
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model Category {
+  id Int @id @default(autoincrement())
+  name String @db.VarChar(100)
+  slug String @db.VarChar(100) @unique
+  flag FLAG @default(ACTIVED)
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  barcode String @id @default(cuid())
+  categoryId Int @db.Int @map("category_id")
+  username String @db.VarChar(100)
+  name String @db.VarChar(100)
+  slug String @db.VarChar(100) @unique
+  price Decimal @db.Decimal(12, 2)
+  image String? @db.VarChar(100)
+  description String? @db.Text
+  flag FLAG @default(PENDING)
+  createdAt DateTime @db.Timestamp(0) @default(dbgenerated("CURRENT_TIMESTAMP")) @map("created_at")
+  updatedAt DateTime @db.Timestamp(0) @default(dbgenerated("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")) @map("updated_at") 
+  category Category @relation(fields: [categoryId], references: [id])
+  account Account @relation(fields: [username], references: [username])
+  features Feature[]
+
+  
+  @@index([barcode, name], map: "idx_barcode_name")
+  @@fulltext([name, description], map: "idx_name_description")
+  @@map("products")
+}
+
+model Feature {
+  id Int @id @default(autoincrement())
+  barcode String @db.VarChar(100)
+  name String  @db.VarChar(100)
+  value String? @db.VarChar(100)
+  description String? @db.Text
+  flag FLAG @default(ACTIVED)
+
+  product Product @relation(fields: [barcode], references: [barcode])
+  @@map("features")
+}
+
+model User {
+  email String @db.VarChar(100) @unique
+  firstName String? @db.VarChar(100) @map("first_name")
+  lastName String? @db.VarChar(100) @map("last_name")
+  password String @db.VarChar(100)
+  flag FLAG @default(PENDING)
+  createdAt DateTime @db.Timestamp(0) @default(dbgenerated("CURRENT_TIMESTAMP")) @map("created_at")
+  updatedAt DateTime @db.Timestamp(0) @default(dbgenerated("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")) @map("updated_at") 
+
+  account Account?
+  @@map("users")
+}
+
+model Account {
+  email String @id @db.VarChar(100) 
+  username String? @db.VarChar(100) @unique
+  roleId Int @db.Int @map("role_id")
+  photo String? @db.VarChar(100) 
+  refreshToken String? @db.VarChar(100) @map("refresh_token")
+  isLogin AUTH @default(LOGOUT) @map("is_login")
+  ip String @db.Char(20)
+  userAgent String @db.VarChar(100)
+
+  user User @relation(fields: [email], references: [email])
+  role Role @relation(fields: [roleId], references: [id])
+  
+  products Product[]
+  email_verify EmailVerify?
+
+  @@map("accounts")
+}
+
+model Role {
+  id Int @id @default(autoincrement())
+  name String @db.VarChar(50)
+  level Int @db.Int
+  flag FLAG @default(ACTIVED)
+
+  accounts Account[]
+  @@map("roles")
+}
+
+model EmailVerify {
+  email String @id @db.VarChar(100) 
+  token String @db.VarChar(100) @default(uuid())
+  type Type @default(REGISTER)
+  ip String @db.Char(20)
+  userAgent String @db.VarChar(100)
+  expiredAt DateTime @db.Timestamp(0) @default(dbgenerated("(CURRENT_TIMESTAMP + INTERVAL 5 MINUTE)")) @map("expired_at")
+  createdAt DateTime @db.Timestamp(0) @default(dbgenerated("CURRENT_TIMESTAMP")) @map("created_at")
+  updatedAt DateTime @db.Timestamp(0) @default(dbgenerated("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")) 
+
+  account Account @relation(fields: [email], references: [email])
+
+  @@map("email_verify")
+}
+
+enum Type {
+  REGISTER
+  CHANGEPASSWORD
+}
+
+enum AUTH {
+  LOGIN
+  LOGOUT
+}
+
+
+
+enum FLAG  {
+  ACTIVED
+  PENDING
+  DISABLED
+  BANNED
+  DELETED
 }
