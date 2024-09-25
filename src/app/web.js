@@ -1,10 +1,12 @@
 import express from "express";
 import { errorMiddleware } from "../middlewares/error.middleware.js";
+import { apiRoute } from "../routes/api.route.js";
 
 export const web = express();
 
 web.use(express.json());
 
+web.use("/api/v1", apiRoute);
 web.use("/api/health", (req, res) => {
 	res.status(200).json({
 		error: false,
