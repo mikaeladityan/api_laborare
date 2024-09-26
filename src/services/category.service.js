@@ -101,7 +101,11 @@ export const listActived = async () => {
 	const limit = 10;
 	return await database.category.findMany({
 		where: {
-			flag: "ACTIVED",
+			OR: [
+				{
+					flag: "ACTIVED",
+				},
+			],
 		},
 		select: {
 			id: true,
@@ -112,6 +116,31 @@ export const listActived = async () => {
 		take: limit,
 		orderBy: {
 			id: "asc",
+		},
+	});
+};
+
+export const deleted = async (categoryId) => {
+	categoryId = validate(getCategoryByIdValidation, categoryId);
+
+	const findId = await database.category.findUnique({
+		where: { id: categoryId },
+		select: { id: true, flag: true },
+	});
+
+	if (!findId) throw new ResponseError(404, "Category is not found");
+	if (findId.flag == "DISABLED") {
+		findId.flag = "DELETED";
+	} else {
+		throw new ResponseError(400, "Category is not required to deleted");
+	}
+
+	return await database.category.update({
+		where: { id: findId.id },
+		data: findId,
+		select: {
+			name: true,
+			flag: true,
 		},
 	});
 };

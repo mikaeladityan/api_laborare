@@ -1,4 +1,4 @@
-import { create, findById, listActived, update, updateFlag } from "../services/category.service.js";
+import { create, deleted, findById, listActived, update, updateFlag } from "../services/category.service.js";
 
 export const createCategoryController = async (req, res, next) => {
 	try {
@@ -54,7 +54,19 @@ export const changeFlagCategoryController = async (req, res, next) => {
 	}
 };
 
-// ?@mikaeladityan UPDATE Paginate List Data
+export const deletedCategoryController = async (req, res, next) => {
+	try {
+		const result = await deleted(req.params.categoryId);
+
+		res.status(201).json({
+			error: false,
+			message: `Category "${result.name}" successfully to ${result.flag}`,
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
 export const listActivedController = async (req, res, next) => {
 	try {
 		const page = 1;
