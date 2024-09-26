@@ -149,9 +149,9 @@ describe("GET /categories", () => {
 		}));
 		await database.category.createMany({ data: dummyCategories });
 	});
-	afterAll(async () => {
-		await clearCategoryTest();
-	});
+	// afterAll(async () => {
+	// 	await clearCategoryTest();
+	// });
 
 	it("should return a list of categories", async () => {
 		const response = await supertest(web).get("/api/v1/categories");
