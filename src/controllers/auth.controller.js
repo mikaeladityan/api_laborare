@@ -66,8 +66,8 @@ export const loginController = async (req, res, next) => {
 				role,
 				roleLevel,
 			},
-			process.env.SECRETE_REFRESH_TOKEN_JWT,
-			{ expiresIn: "30d" }
+			process.env.SECRETE_ACCESS_TOKEN_JWT,
+			{ expiresIn: "60s" }
 		);
 		res.cookie("refreshToken", result.refreshToken, {
 			httpOnly: true,
