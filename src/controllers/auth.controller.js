@@ -69,8 +69,10 @@ export const loginController = async (req, res, next) => {
 			process.env.SECRETE_ACCESS_TOKEN_JWT,
 			{ expiresIn: "60s" }
 		);
+
 		res.cookie("refreshToken", result.refreshToken, {
 			httpOnly: true,
+			secure: true,
 			maxAge: 30 * 24 * 60 * 60 * 1000,
 		});
 		res.status(200).json({

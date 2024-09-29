@@ -197,6 +197,7 @@ const login = async (request) => {
 	});
 
 	if (!findUser) throw new ResponseError(404, "User is not found");
+
 	const findAccount = await database.account.findUnique({
 		where: {
 			email: findUser.email,
@@ -206,8 +207,6 @@ const login = async (request) => {
 			isLogin: true,
 			photo: true,
 			username: true,
-			ip: true,
-			userAgent: true,
 			user: {
 				select: {
 					id: true,
@@ -228,36 +227,23 @@ const login = async (request) => {
 
 	if (!findAccount) throw new ResponseError(400, "Email or Password is wrong or already to login");
 
-	const reqPassword = findUser.password;
-	const matchPassword = await bcrypt.compare(requestBody.password, reqPassword);
-	if (!matchPassword) throw new ResponseError(400, "Email or Password is wrong");
+	const isPasswordValid = await bcrypt.compare(requestBody.password, findUser.password);
+	if (!isPasswordValid) throw new ResponseError(400, "Email or Password is wrong");
 
-	// Constructuring
-	const id = findAccount.user.id;
-	const email = findAccount.user.email;
-	const username = findAccount.username;
-	const firstName = findAccount.user.firstName;
-	const lastName = findAccount.user.lastName;
-	const photo = findAccount.photo;
-	const isLogin = findAccount.isLogin;
-	const role = findAccount.role.name;
-	const roleLevel = findAccount.role.level;
+	// Constructing user data for token
+	const userData = {
+		id: findAccount.user.id,
+		email: findAccount.user.email,
+		username: findAccount.username,
+		firstName: findAccount.user.firstName,
+		lastName: findAccount.user.lastName,
+		photo: findAccount.photo,
+		isLogin: findAccount.isLogin,
+		role: findAccount.role.name,
+		roleLevel: findAccount.role.level,
+	};
 
-	const refreshToken = jwt.sign(
-		{
-			id,
-			email,
-			username,
-			firstName,
-			lastName,
-			photo,
-			isLogin,
-			role,
-			roleLevel,
-		},
-		process.env.SECRETE_REFRESH_TOKEN_JWT,
-		{ expiresIn: "30d" }
-	);
+	const refreshToken = jwt.sign(userData, process.env.SECRETE_REFRESH_TOKEN_JWT, { expiresIn: "30d" });
 
 	return await database.account.update({
 		where: {
@@ -275,8 +261,6 @@ const login = async (request) => {
 			isLogin: true,
 			photo: true,
 			username: true,
-			ip: true,
-			userAgent: true,
 			refreshToken: true,
 			user: {
 				select: {
@@ -284,7 +268,6 @@ const login = async (request) => {
 					email: true,
 					firstName: true,
 					lastName: true,
-					password: true,
 				},
 			},
 			role: {
