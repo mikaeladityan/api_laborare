@@ -78,7 +78,7 @@ model Account {
   username String? @db.VarChar(100) @unique
   roleId Int @db.Int @map("role_id")
   photo String? @db.VarChar(100) 
-  refreshToken String? @db.VarChar(100) @map("refresh_token")
+  refreshToken String? @db.Text @map("refresh_token")
   isLogin AUTH @default(LOGOUT) @map("is_login")
   ip String @db.Char(20)
   userAgent String @db.VarChar(100)

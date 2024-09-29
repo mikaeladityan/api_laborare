@@ -2,9 +2,13 @@ import express from "express";
 import { errorMiddleware } from "../middlewares/error.middleware.js";
 import { apiRoute } from "../routes/api.route.js";
 import { appRouter } from "../routes/app.router.js";
+import cookieParser from "cookie-parser";
+import cors from "cors";
 
 export const web = express();
 
+web.use(cors({ credentials: true, origin: "http://localhost:3000" }));
+web.use(cookieParser());
 web.use(express.json());
 web.use(express.urlencoded({ extended: true }));
 
