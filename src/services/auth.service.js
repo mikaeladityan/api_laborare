@@ -37,7 +37,6 @@ const register = async (request) => {
 			updatedAt: true,
 			email_verify: {
 				select: {
-					token: true,
 					ip: true,
 					userAgent: true,
 					createdAt: true,
@@ -280,9 +279,37 @@ const login = async (request) => {
 	});
 };
 
+const logout = async (request) => {
+	const refreshToken = request.cookies.refreshToken;
+
+	const user = await database.account.findFirst({
+		where: {
+			refreshToken: refreshToken,
+		},
+		select: {
+			email: true,
+			refreshToken: true,
+		},
+	});
+
+	if (!refreshToken) throw new ResponseError(401, "Unautorize");
+	if (!user) throw new ResponseError(404, "User is not found");
+	const data = await database.account.update({
+		where: {
+			email: user.email,
+		},
+		data: {
+			refreshToken: null,
+			isLogin: "LOGOUT",
+		},
+	});
+	console.log(data);
+};
+
 export default {
 	register,
 	emailVerify,
 	resendEmailVerify,
 	login,
+	logout,
 };

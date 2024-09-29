@@ -84,3 +84,17 @@ export const loginController = async (req, res, next) => {
 		next(error);
 	}
 };
+
+export const logoutController = async (req, res, next) => {
+	try {
+		await authService.logout(req);
+
+		res.clearCookie("refreshToken");
+		res.status(200).json({
+			error: false,
+			message: "Successfully to logout user",
+		});
+	} catch (error) {
+		next(error);
+	}
+};
