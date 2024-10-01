@@ -23,9 +23,9 @@ export const database = new PrismaClient({
 });
 
 database.$on("query", (e) => {
-	console.log("Query: " + e.query);
-	console.log("Params: " + e.params);
-	console.log("Duration: " + e.duration + "ms");
+	logger.info("Query: " + e.query);
+	logger.info("Params: " + e.params);
+	logger.info("Duration: " + e.duration + "ms");
 });
 database.$on("error", (e) => {
 	errLogger.error(`${e.target}, message: ${e.target},  ${e.timestamp}`);
