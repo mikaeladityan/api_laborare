@@ -44,31 +44,19 @@ export const loginController = async (req, res, next) => {
 	try {
 		const result = await authService.login(req.body);
 
-		const id = result.user.id;
-		const email = result.user.email;
-		const username = result.username;
-		const firstName = result.user.firstName;
-		const lastName = result.user.lastName;
-		const photo = result.photo;
-		const isLogin = result.isLogin;
-		const role = result.role.name;
-		const roleLevel = result.role.level;
+		const payload = {
+			id: result.user.id,
+			email: result.user.email,
+			username: result.username,
+			firstName: result.user.firstName,
+			lastName: result.user.lastName,
+			photo: result.photo,
+			isLogin: result.isLogin,
+			role: result.role.name,
+			roleLevel: result.role.level,
+		};
 
-		const accessToken = jwt.sign(
-			{
-				id,
-				email,
-				username,
-				firstName,
-				lastName,
-				photo,
-				isLogin,
-				role,
-				roleLevel,
-			},
-			process.env.SECRETE_ACCESS_TOKEN_JWT,
-			{ expiresIn: "60s" }
-		);
+		const accessToken = jwt.sign(payload, process.env.SECRETE_ACCESS_TOKEN_JWT, { expiresIn: "60s" });
 
 		res.cookie("refreshToken", result.refreshToken, {
 			httpOnly: true,
@@ -94,6 +82,15 @@ export const logoutController = async (req, res, next) => {
 			error: false,
 			message: "Successfully to logout user",
 		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+export const getRefreshTokenController = async (req, res, next) => {
+	try {
+		const result = await getRefreshToken(req.cookies.refreshToken);
+		console.log(result);
 	} catch (error) {
 		next(error);
 	}

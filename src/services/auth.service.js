@@ -306,10 +306,45 @@ const logout = async (request) => {
 	console.log(data);
 };
 
+const getRefreshToken = async (request) => {
+	const refreshToken = request;
+	if (!refreshToken) throw new ResponseError(401, "Unauthorize");
+
+	const findAccount = await database.account.findUnique({
+		where: {
+			refreshToken: refreshToken,
+		},
+		select: {
+			isLogin: true,
+			photo: true,
+			username: true,
+			user: {
+				select: {
+					id: true,
+					email: true,
+					firstName: true,
+					lastName: true,
+					password: true,
+				},
+			},
+			role: {
+				select: {
+					name: true,
+					level: true,
+				},
+			},
+		},
+	});
+	if (!findAccount) throw new ResponseError(404, "User is not found");
+
+	return findAccount;
+};
+
 export default {
 	register,
 	emailVerify,
 	resendEmailVerify,
 	login,
 	logout,
+	getRefreshToken,
 };
