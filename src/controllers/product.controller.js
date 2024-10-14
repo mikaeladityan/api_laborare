@@ -95,7 +95,48 @@ const changeFlagController = async (req, res, next) => {
 	}
 };
 
+const updateController = async (req, res, next) => {
+	try {
+		const barcode = req.params.barcode;
+		const request = req.body;
+		const result = await productService.update(barcode, request);
+		res.status(201).json({
+			error: false,
+			message: `Successfully to update ${result.name}`,
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+const deletedFeatureController = async (req, res, next) => {
+	try {
+		const request = req.params;
+		await productService.deletedFeature(request);
+		res.status(201).json({
+			error: false,
+			message: "Successfully to deleted feature",
+		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+const createFeatureController = async (req, res, next) => {
+	try {
+		const barcode = req.params.barcode;
+		const request = req.body;
+		const result = await productService.createFeature(barcode, request);
+		res.status(201).json({
+			error: false,
+			message: "Successfully to created new Feature on this product",
+		});
+	} catch (error) {
+		next(error);
+	}
+};
 export default {
+	deletedFeatureController,
 	createController,
 	listController,
 	listPendingController,
@@ -103,4 +144,6 @@ export default {
 	deleteController,
 	activedController,
 	changeFlagController,
+	updateController,
+	createFeatureController,
 };

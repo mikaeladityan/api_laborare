@@ -1,5 +1,5 @@
 import slug from "slug";
-import { getProductValidation, productValidation } from "../validations/product.validation.js";
+import { featureValidation, getProductValidation, productValidation } from "../validations/product.validation.js";
 import { validate } from "../validations/validation.js";
 import { database } from "../app/database.js";
 import { ResponseError } from "../errors/Response.error.js";
@@ -40,13 +40,8 @@ const create = async (request) => {
 			select: {
 				barcode: true,
 				name: true,
-				category: {
-					select: {
-						name: true,
-					},
-				},
-				slug: true,
-				description: true,
+				features: { select: { name: true } },
+				category: { select: { name: true } },
 			},
 		});
 
@@ -90,6 +85,7 @@ const findByBarcode = async (barcode) => {
 			},
 			features: {
 				select: {
+					id: true,
 					name: true,
 					value: true,
 					description: true,
@@ -224,6 +220,140 @@ const changeFlag = async (barcode) => {
 		data: product,
 	});
 };
+
+const update = async (barcode, request) => {
+	try {
+		validationProduct(barcode);
+		const requestBody = validate(productValidation, request);
+
+		const countProduct = await database.product.count({
+			where: {
+				slug: slug(requestBody.name),
+				barcode: { not: barcode },
+			},
+		});
+
+		if (countProduct > 0) throw new ResponseError(400, "Product with this name is already");
+
+		const product = await database.product.findUnique({
+			where: {
+				barcode: barcode,
+			},
+			select: {
+				barcode: true,
+				flag: true,
+			},
+		});
+
+		if (!product) throw new ResponseError(404, "Produk tidak ditemukan");
+		if (product.flag !== "ACTIVED") throw new ResponseError(400, "Produk tidak aktif");
+
+		const result = await database.$transaction(async (tx) => {
+			const dataProduct = await tx.product.update({
+				where: {
+					barcode: product.barcode,
+				},
+				data: {
+					name: requestBody.name,
+					price: requestBody.price,
+					categoryId: requestBody.categoryId,
+					description: requestBody.description,
+					image: requestBody.image,
+					slug: slug(requestBody.name),
+				},
+				select: {
+					barcode: true,
+					name: true,
+					features: true,
+					category: { select: { name: true } },
+				},
+			});
+
+			if (requestBody.features && requestBody.features.length > 0) {
+				const updatedFeatures = [];
+				for (const feature of requestBody.features) {
+					try {
+						const existingFeature = await tx.feature.findFirst({
+							where: {
+								id: feature.id,
+								barcode: dataProduct.barcode,
+							},
+						});
+
+						if (existingFeature) {
+							const updatedFeature = await tx.feature.update({
+								where: {
+									id: feature.id,
+								},
+								data: {
+									name: feature.name,
+									value: feature.value,
+									description: feature.description,
+								},
+							});
+							updatedFeatures.push(updatedFeature);
+						} else {
+							throw new ResponseError(400, "Failed to updating this products and feature");
+						}
+					} catch (error) {
+						throw new ResponseError(400, error.message);
+					}
+				}
+				dataProduct.features = updatedFeatures;
+			}
+
+			return dataProduct;
+		});
+
+		return result;
+	} catch (error) {
+		if (error instanceof ResponseError) {
+			throw error;
+		}
+		throw new ResponseError(400, "Failed to updating this products and feature");
+	}
+};
+
+const deletedFeature = async (request) => {
+	const { barcode, id } = request;
+
+	if (!id || !barcode) throw new ResponseError("400", "Fialed to deleted feature of products");
+
+	const feature = await database.feature.findFirst({
+		where: {
+			barcode: barcode,
+			id: parseInt(id),
+		},
+		select: {
+			barcode: true,
+			id: true,
+		},
+	});
+
+	if (!feature) throw new ResponseError("404", "Feature is not found on this products");
+
+	return await database.feature.delete({
+		where: {
+			barcode: feature.barcode,
+			id: feature.id,
+		},
+	});
+};
+
+const createFeature = async (barcode, request) => {
+	let requestBody = validate(featureValidation, request);
+	if (!barcode) throw new ResponseError(404, "It's not allowed!");
+
+	return await database.feature.create({
+		data: {
+			barcode: barcode,
+			name: requestBody.name,
+			value: requestBody.value,
+			description: requestBody.description,
+		},
+	});
+};
+
 const getProducts = (barcode) => {
 	const result = database.product.findUnique({
 		where: {
@@ -237,7 +367,20 @@ const getProducts = (barcode) => {
 
 	return result;
 };
+
 const validationProduct = (barcode) => {
 	return validate(getProductValidation, barcode);
 };
-export default { create, findByBarcode, list, deleted, actived, changeFlag, listPending };
+
+export default {
+	create,
+	findByBarcode,
+	list,
+	deleted,
+	actived,
+	changeFlag,
+	listPending,
+	update,
+	deletedFeature,
+	createFeature,
+};
